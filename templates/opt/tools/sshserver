@@ -1,0 +1,10 @@
+#!/bin/bash
+ssh-keygen -A
+mkdir -p /run/sshd
+mkdir -p /var/log
+touch /var/log/btmp
+chmod 600 /var/log/btmp
+chown root:root /var/log/btmp
+chown root:root /etc/shadow
+chmod 600 /etc/shadow
+/usr/sbin/sshd

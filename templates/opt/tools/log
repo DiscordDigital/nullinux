@@ -1,0 +1,8 @@
+#!/bin/bash
+mkdir -p /var/log/
+scriptname="$1"
+logfile="/var/log/$scriptname.log"
+while IFS= read -r line; do
+    echo "[$(date)] $line" >> $logfile
+done
+exit 0

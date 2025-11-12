@@ -1,0 +1,39 @@
+#!/bin/bash
+disk=/dev/disk/by-label/NHOME
+if [ -L $disk ]; then
+    mkdir -p /mnt/nhome
+    mount $disk /mnt/nhome
+    if [ $? -eq 0 ]; then
+        if [ ! -f /mnt/nhome/.bashrc ]; then
+            # Ask user if persistent drive should be set-up now
+            echo The following process will restart the machine
+            read -p "Do you want to setup persistent drive now? (y/n): " ans
+            if [[ "$ans" =~ ^[Yy]$ ]]; then
+                cp -r /root/. /mnt/nhome/
+
+                mkdir /mnt/nhome/config
+
+                cp /etc/group /mnt/nhome/config/
+                cp /etc/passwd /mnt/nhome/config/
+                cp /etc/shadow /mnt/nhome/config/
+                cp /etc/network/network.sh /mnt/nhome/config/
+                cp -r /etc/ssh /mnt/nhome/config/
+                touch /mnt/nhome/config/user.autostart.sync.txt
+
+                umount /mnt/nhome
+
+                reboot
+            else
+                umount /mnt/nhome
+            fi
+            exit 0
+        else
+            echo "Persistence is already setup."
+            umount /mnt/nhome
+        fi
+    else
+        echo Failed to mount nhome drive
+    fi
+else
+    echo Unable to find nhome drive
+fi

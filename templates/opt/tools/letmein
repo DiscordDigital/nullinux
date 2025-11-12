@@ -1,0 +1,150 @@
+#!/bin/bash
+
+# Errorcodes:
+#
+# 1 = Unknown fstype as target.
+# 2 = Failed to mount BitLocker drive
+# 3 = Unable to detect Windows
+
+
+show_help() {
+cat << EOF
+Usage: $0 [options]
+
+This command enables a command prompt with system privileges on logon screen
+for Microsoft Windows. You can run it again, to undo the changes.
+
+Make sure to shutdown the Windows system by holding shift key while powering down before using this tool.
+Hibernation prevents accessing the disk safely.
+
+Options:
+  -h, --help           Show this help message
+  -t, --target         Specify the target (example: /dev/sda3)
+  -u, --undirty        Removes dirty bit from ntfs during runtime
+EOF
+}
+
+letmein_toggle() {
+    local osfolder=$1
+
+    if [ -f $osfolder/Windows/System32/osk_.exe ]; then
+        cp $osfolder/Windows/System32/osk_.exe $osfolder/Windows/System32/osk.exe
+        rm $osfolder/Windows/System32/osk_.exe
+        echo Login cmd is now disabled
+    else
+        cp $osfolder/Windows/System32/osk.exe $osfolder/Windows/System32/osk_.exe
+        cp $osfolder/Windows/System32/cmd.exe $osfolder/Windows/System32/osk.exe
+        echo Login cmd is now enabled
+    fi
+
+    umount $osfolder
+}
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -t|--target)
+            shift
+            target="$1"
+            ;;
+        -u|--undirty)
+            undirty=1
+            ;;
+        *)
+            echo "Unknown option: $1"
+            show_help
+            exit 10
+            ;;
+    esac
+    shift
+done
+
+mkdir -p /mnt/osmnt
+
+if [[ -v target ]]; then
+    # Manual mode
+    if [[ -b "$target" ]]; then
+        # Block device exists, check if it's BitLocker
+        fstype=$(blkid -o value -s TYPE "$target" 2>/dev/null)
+        
+        if [[ $fstype == "BitLocker" ]]; then
+            # Is BitLocker
+            map_bitlocker --target /dev/$(basename $target) --mount /mnt/osmnt
+            if [ $? -eq 0 ]; then
+                letmein_toggle /mnt/osmnt
+                map_bitlocker -c $target
+            else
+                echo "Failed to mount BitLocker drive /dev/mapper/$(basename $target)"
+                exit 2
+            fi
+            exit
+        fi
+        
+        if [[ $fstype == "ntfs" ]]; then
+            if [[ -v undirty ]]; then
+                ntfsfix -d $target
+            fi
+        
+            # Is regular
+            mount -t ntfs3 $target /mnt/osmnt 2>/dev/null
+            if [ $? -eq 32 ]; then
+                echo "Can't mount partition, partition is flagged as dirty."
+                exit 7
+            fi
+            
+            letmein_toggle /mnt/osmnt
+            
+            exit
+        fi
+        
+        echo "Unknown type $fstype as target."
+        exit 1
+    fi
+else
+    # Run winfind in auto mode
+    target=$(winfind)
+    if [ $? -eq 0 ]; then
+        # Block device exists, check if it's BitLocker
+        fstype=$(blkid -o value -s TYPE "$target" 2>/dev/null)
+        
+        if [[ $fstype == "ntfs" ]]; then
+            if [[ -v undirty ]]; then
+                ntfsfix -d $target
+            fi
+            mount -t ntfs3 $target /mnt/osmnt 2>/dev/null
+            if [ $? -eq 32 ]; then
+                echo "Can't mount partition, partition is flagged as dirty."
+                exit 7
+            fi
+            
+            letmein_toggle /mnt/osmnt
+            
+            exit
+        fi
+
+        if [[ $fstype == "BitLocker" ]]; then
+            # Is BitLocker
+            if [[ -v undirty ]]; then
+                map_bitlocker --undirty --target /dev/$(basename $target) --mount /mnt/osmnt
+            else
+                map_bitlocker --target /dev/$(basename $target) --mount /mnt/osmnt
+            fi
+            
+            if [ $? -eq 0 ]; then
+                letmein_toggle /mnt/osmnt
+                map_bitlocker -c $target
+            else
+                echo "Failed to mount BitLocker drive /dev/mapper/$(basename $target)"
+                exit 2
+            fi
+            exit
+        fi
+    else
+        echo "Windows was not found by letmein."
+        exit 3
+    fi
+fi

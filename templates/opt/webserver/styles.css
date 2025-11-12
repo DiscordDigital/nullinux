@@ -1,0 +1,17 @@
+* {
+    font-family: system-ui;
+    font-size: 18px;
+    text-decoration: none;
+}
+
+html {
+    background-color: black;
+}
+
+a {
+    color: #ca79ca;
+}
+
+li {
+  margin-bottom: 5px;
+}

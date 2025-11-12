@@ -1,0 +1,28 @@
+#!/bin/bash
+loadkeys() {
+    lang="$1"
+
+    if [ ! -d "/usr/share/kbd/" ]; then
+        echo "Can't find /usr/share/kbd/."
+        return 1
+    fi
+
+    if [ -z "$1" ]; then
+        echo Specify language file, eg: de, us, de-latin1..
+        return 1
+    fi
+
+    file=$(find /usr/share/kbd/* -type f -name "$1.map" 2>/dev/null)
+    if [ -z "$file" ]; then
+        echo "$1 not found"
+        return 1
+    fi
+
+    /usr/bin/loadkeys "$file"
+    return 0
+}
+
+# Call loadkeys if script executed directly
+if [ "${BASH_SOURCE:-$0}" = "$0" ]; then
+    loadkeys "$@"
+fi

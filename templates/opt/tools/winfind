@@ -1,0 +1,153 @@
+#!/bin/bash
+
+# Errorcodes:
+#
+# 1 = No windows found
+# 2 = Partition is flagged as dirty
+# 3 = Target device is no block device
+# 4 = Block device is not NTFS
+# 5 = Failed to map BitLocker drive.
+# 6 = No Windows device found
+
+show_help() {
+cat << EOF
+Usage: $0 [options]
+
+This command finds Windows on NTFS disks.
+If you ran this tool on a hibernating Windows, it may flag the partition as dirty.
+
+Options:
+  -h, --help           Show this help message
+  -n, --nobitlocker    Ignores BitLocker partitions
+  -t, --target         Specify the target (example: /dev/sda3)
+  -u, --undirty        Removes dirty bit from ntfs during runtime
+EOF
+}
+
+winfind() {
+    local osdev=$1
+    
+    fstype=$(blkid -o value -s TYPE "$osdev" 2>/dev/null)
+
+    if [[ $fstype != "ntfs" ]]; then
+        echo Block device is not ntfs.
+        exit 4
+    fi
+
+    mkdir -p /mnt/osprobe
+    if [[ -v undirty ]]; then
+        ntfsfix -d $osdev
+    fi
+    mount -t ntfs3 $osdev /mnt/osprobe 2>/dev/null
+    if [ $? -eq 32 ]; then
+        if [ -b /dev/mapper/$(basename $osdev) ]; then
+            cryptsetup close $(basename $osdev)
+        fi
+        echo "Partition is flagged as dirty."
+        exit 2
+    fi
+    win=no
+    if [ -d /mnt/osprobe/Windows/System32 ]; then
+        win=yes
+    fi
+
+    umount /mnt/osprobe
+    if [[ $win == "yes" ]]; then
+        echo /dev/$(basename $osdev)
+        return 0
+    else
+        return 1
+    fi
+}
+
+nobitlocker=1
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -t|--target)
+            shift
+            target="$1"
+            ;;
+        -n|--nobitlocker)
+            shift
+            nobitlocker=0
+            ;;
+        -u|--undirty)
+            undirty=1
+            ;;
+        *)
+            echo "Unknown option: $1"
+            show_help
+            exit 10
+            ;;
+    esac
+    shift
+done
+
+if [ -v target ]; then
+    if [[ -b "$target" ]]; then
+        fstype=$(blkid -o value -s TYPE "$target" 2>/dev/null)
+        if [[ $fstype == "ntfs" ]]; then
+            winfind $target
+        fi
+        
+        if [[ $fstype == "BitLocker" ]]; then
+            map_bitlocker --target $target
+            if [ $? -eq 0 ]; then
+                if [[ -v undirty ]]; then
+                    ntfsfix -d /dev/mapper/$(basename $target)
+                fi
+                winfind /dev/mapper/$(basename $target)
+                map_bitlocker --close $target
+                exit
+            else
+                echo "Failed to map BitLocker drive."
+                exit 5
+            fi
+        fi
+        
+        echo "Invalid filesystem, expected ntfs or BitLocker."
+        exit 4
+    else
+        echo "Target device is no block device."
+        exit 3
+    fi
+    
+    if [ $? -eq 1 ]; then
+        exit 1
+    fi
+else
+    for dev in /dev/sd*? /dev/nvme*n*; do
+        [ -b "$dev" ] || continue  # skip if not a block device
+        
+        label=$(blkid -o value -s PARTLABEL "$dev" 2>/dev/null)
+        fstype=$(blkid -o value -s TYPE "$dev" 2>/dev/null)
+        
+        if [[ "$label" == "Basic data partition" ]] && ([[ "$fstype" == "ntfs" ]] || [[ "$fstype" == "BitLocker" ]]); then
+            if [[ "$fstype" == "BitLocker" ]]; then
+                if [ $nobitlocker -eq 1 ]; then
+                    # Do BitLocker magic before calling winfind
+                    map_bitlocker --target $dev
+                    if [ $? -eq 0 ]; then
+                        winfind /dev/mapper/$(basename $dev)
+                        map_bitlocker -c $dev
+                        exit
+                    fi
+                fi
+            else
+                # Handling regular drive
+                winfind $dev
+                if [ $? -eq 0 ]; then
+                    exit 0
+                fi
+            fi
+        fi
+    done
+    echo "Windows was not found."
+    exit 6
+fi

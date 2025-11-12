@@ -1,0 +1,148 @@
+#!/bin/bash
+
+# Errorcodes:
+#
+# 1 = No keyfile found (Nothing to authenticate with)
+# 2 = All keys don't match
+# 3 = Can't close device
+# 4 = Target is no blockdevice
+# 5 = Mountpoint is aleady mounted
+# 6 = Mountpoint doesn't exist
+# 7 = Can't mount partition, partition is flagged as dirty
+# 8 = Disk is already unlocked
+
+show_help() {
+cat << EOF
+Usage: $0 [options]
+
+This tool allows mapping bitlocker drives using a keyfile.
+Make sure you close the bitlocker drive with -c when done.
+
+Options:
+  -h, --help           Show this help message
+  -t, --target         Specify the target (example: /dev/sda3)
+  -m, --mount          Mount directory (example: /mnt/)
+  -k, --keys           Key file (example: /root/keys.txt)
+  -c, --close          Close mapped device (example: sda3)
+  -u, --undirty        Removes dirty bit from ntfs during runtime
+EOF
+}
+
+map_bitlocker() {
+    local osdev=$1
+
+    mkdir -p /mnt/osprobe
+
+    if [[ ! -v keyfile ]]; then
+        keyfile="/root/config/keys.txt"
+    fi
+    
+    # Test if keys file exists:
+    if [ ! -f $keyfile ]; then
+        echo "No keyfile found (Nothing to authenticate with)"
+        exit 1
+    fi
+
+    # Make sure keys are in unix format
+    dos2unix $keyfile 2> /dev/null
+    
+    # Unset mapped variable, so the loop exits, when mapped is set.
+    if [ -b /dev/mapper/$(basename $osdev) ]; then
+        echo "Failed to unlock BitLocker disk, disk is already unlocked."
+        exit 8
+    fi
+    unset mapped
+    while read -r line; do
+        echo $line | cryptsetup bitlkOpen $osdev $(basename $osdev) - 2>/dev/null
+        if [ $? -eq 0 ]; then
+            mapped=/dev/mapper/$(basename $osdev)
+            break
+        fi
+    done < $keyfile
+
+    if [ -n "$mapped" ]; then
+        if [[ -v mount ]]; then
+
+            if [ -d "$mount" ]; then
+                if mountpoint -q "$mount"; then
+                    echo Mountpoint is aleady mounted
+                    exit 5
+                fi
+            else
+                echo "Mountpoint doesn't exist"
+                exit 6
+            fi
+
+            if [[ -v undirty ]]; then
+                ntfsfix -d $target
+            fi
+            
+            mount -t ntfs3 "$mapped" "$mount" 2>/dev/null
+            if [ $? -eq 32 ]; then
+                echo "Can't mount partition, partition is flagged as dirty."
+                exit 7
+            fi
+            exit
+        fi
+        return 0
+    else
+        echo "All keys don't match"
+        exit 2
+    fi
+}
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -t|--target)
+            shift
+            target="$1"
+            ;;
+        -m|--mount)
+            shift
+            mount="$1"
+            ;;
+        -k|--keys)
+            shift
+            keyfile="$1"
+            ;;
+        -c|--close)
+            shift
+            close="$1"
+            ;;
+        -u|--undirty)
+            undirty=1
+            ;;
+        *)
+            echo "Unknown option: $1"
+            show_help
+            exit 10
+            ;;
+    esac
+    shift
+done
+
+if [[ -v close ]]; then
+    if [[ -b "/dev/mapper/$(basename $close)" ]]; then
+        cryptsetup close "/dev/mapper/$(basename $close)"
+        exit 0
+    else
+        echo "Can't close device."
+        exit 3
+    fi
+fi
+
+if [[ -v target ]]; then
+    if [[ -b $target ]]; then
+        map_bitlocker $target
+        exit
+    else
+        echo Target is no blockdevice
+        exit 4
+    fi
+fi
+
