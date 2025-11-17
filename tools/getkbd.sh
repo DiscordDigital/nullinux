@@ -18,8 +18,7 @@ if [ ! -d "$ROOTFS/opt/kbd" ]; then
     mkdir -p "$TMPFOLDER/kbd_data"
     tar xf "$KBDFILE" -C "$TMPFOLDER/kbd_data/"
     mkdir -p "$ROOTFS/usr/share/kbd"
-    keymaps=$(find "$TMPFOLDER/kbd_data/" -type d -name "keymaps")
-    keymapsfolder=$(find "$TMPFOLDER/kbd_data/" -type d -name "keymaps" | head -n 1)
+    keymapsfolder=$(find "$TMPFOLDER/kbd_data/" -type d -name "keymaps" | tail -n1)
     if [ -d "$keymapsfolder" ]; then
         cp -r "$keymapsfolder" "$ROOTFS/usr/share/kbd/"
     else
