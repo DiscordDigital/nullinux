@@ -107,7 +107,7 @@ if [[ $method == "dhcpv4" ]]; then
             break
         fi
 
-        sleep 0.2
+        sleep 0.1
     done
 
     # Only configure ip, if no error happened

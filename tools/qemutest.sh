@@ -5,6 +5,11 @@ ROOTFS=$(realpath "$TOOLSDIR/../rootfs")
 TEMPDIR=$(realpath "$TOOLSDIR/../temp")
 MAIN=$(realpath "$TOOLSDIR/../")
 
+if [ "$1" == "quiet" ]; then
+    echo "Skipping qemu test.."
+    exit 0
+fi
+
 # Copy OVMF file from host to temp
 cp /usr/share/OVMF/OVMF_CODE_4M.fd "$TEMPDIR/"
 
