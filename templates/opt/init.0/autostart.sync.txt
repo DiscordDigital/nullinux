@@ -1,5 +1,6 @@
 /opt/disk-by.sh
 /opt/persistence.sh
+/opt/timezone.sh
 /opt/modules.sh
 /opt/font.sh
 /opt/network.sh

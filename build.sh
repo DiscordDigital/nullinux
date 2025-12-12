@@ -56,7 +56,7 @@ done
 MAIN=$(realpath $(dirname ${BASH_SOURCE[0]}))
 TOOLSDIR=$(realpath "$MAIN/tools")
 
-declare -a tools=( "dependencies" "getlinux" "mkrootfs" "compiletools" "filegrab" "copymodules" "getkbd" "createinitcpio" "grubiso" "qemutest" )
+declare -a tools=( "dependencies" "getlinux" "mkrootfs" "compiletools" "filegrab" "copymodules" "getkbd" "timezone" "createinitcpio" "grubiso" "qemutest" )
 
 for tool in "${tools[@]}"; do
     if [[ "$tool" == "qemutest" ]] && [[ -v quiet ]]; then
