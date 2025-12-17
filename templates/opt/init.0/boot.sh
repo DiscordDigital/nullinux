@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Include /opt/tools into PATH
+export PATH=/opt/tools:$PATH
+
 # Autostart all init0 sync entries in /opt/init.0/autostart.sync.txt
 while read line; do
     bash -c "$line" 2> >( /opt/tools/log "$(basename $line)" )

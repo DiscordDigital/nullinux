@@ -13,7 +13,7 @@ Options:
   -q, --quiet                  Skips running qemu, useful if you just want to obtain the ISO file.
   -s, --skip-qemu-install      Skips the installation of qemu.
   -i, --install-qemu           Useful if you initially skipped the installation of qemu.
-  -x, --extract                Extracts the generated ISO file to an output directory
+  -x, --extract                Extracts the generated ISO file to an output directory.
 EOF
 }
 

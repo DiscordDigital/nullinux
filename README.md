@@ -10,9 +10,10 @@ Following steps will be done during the execution of `./build.sh`:
 5. [**filegrab**] This tool uses `config/embed.txt` to embed binaries from the host system (WSL) into the `rootfs` folder, it will also attempt to obtain all dynamically linked lib-files and put them into the expected paths within `rootfs`. You can extend the list in `config/embed.txt` to embed more files from the host system, some packages may require additional files.
 6. [**copymodules**] All expected and compiled modules that were created during `getlinux` will be copied from the `linux` folder, into the rootfs folder.
 7. [**getkbd**] This script will download a file named `kbd_2.7.1.orig.tar.gz` which contains a kbd folder, that contains keymaps for various languages, and place it in the `rootfs`.
-8. [**createinitcpio**] This will create a list of all files in the `rootfs` and use the `cpio` program to create an init.cpio file. 
-9. [**grubiso**] This script creates a bootable file using the Grub2 bootloader. And place the `nullinux.iso` file into the main nullinux folder.
-10. [**qemutest**] That is the final test, that shows you if the `iso` file you created works, you will see a qemu window open, and the linux booting. You can turn it off using the `poweroff` command. You can also attempt to setup persistent storage, as this test will include a persistent storage, stored in `temp` named `persistent.img`.
+8. [**timezone**] Copies the timezone files from the host environment into the rootfs.
+9. [**createinitcpio**] This will create a list of all files in the `rootfs` and use the `cpio` program to create an init.cpio file. 
+10. [**grubiso**] This script creates a bootable file using the Grub2 bootloader. And place the `nullinux.iso` file into the main nullinux folder.
+11. [**qemutest**] That is the final test, that shows you if the `iso` file you created works, you will see a qemu window open, and the linux booting. You can turn it off using the `poweroff` command. You can also attempt to setup persistent storage, as this test will include a persistent storage, stored in `temp` named `persistent.img`.
 
 ## What is Nul Linux?
 Nul Linux is an initramfs Linux, which is by default ran in RAM, and does not persist changes in storage, however using a the provided tool `persistentsetup`, you can create an auto-mount partition, which will become /root, that becomes persistent upon start. The persistent drive is recommended to be of type `exFAT` and should be labelled `NHOME` (Nul Home). 
@@ -162,6 +163,44 @@ Turns the system off.
 Changes directory to /, so `root` no longer is used, then it'll try to unmount it through `powerctl`. The `powerctl` program prepares the system, so the `init` program can perform the reboot.
 
 Reboots the system.
+
+# Configuring Nul Linux
+
+## Configure a timezone
+
+If you are in ramdisk mode, you can set the timezone, by creating a symlink:\
+`ln -s /usr/share/zoneinfo/Europe/Paris /etc/localtime`
+
+You can set a persistent timezone by creating a file in persistent mode:\
+`echo Europe/Paris > ~/config/timezone`
+
+## Setting the keyboard layout
+
+In ramdisk mode, you can load a keyboard layout by typing:\
+`loadkeys fr` (Example for french keyboard layout.)
+
+In persistent mode, you can add following line in `~/config/user.autostart.sync.txt`:\
+`loadkeys de` (Example for german keyboard layout.)
+
+# Build Options
+
+Here's the help of the `build.sh` script:
+
+```
+Usage: ./build.sh [options]
+
+Installs required dependencies, and crafts an ISO file in the same directory as $(basename $0).
+
+Options:
+  -h, --help                   Shows the help of the build tool.
+  -q, --quiet                  Skips running qemu, useful if you just want to obtain the ISO file.
+  -s, --skip-qemu-install      Skips the installation of qemu.
+  -i, --install-qemu           Useful if you initially skipped the installation of qemu.
+  -x, --extract                Extracts the generated ISO file to an output directory.
+```
+
+In case you want to just build the ISO and move it to your user profile folder, you can run `build.sh` like this:\
+`./build.sh -q -s -x /mnt/c/Users/MyProfile/`
 
 # About distribution
 Due to the fact that this only contains partial binaries of packages, I want to clarify to *not* distribute ISOs.
