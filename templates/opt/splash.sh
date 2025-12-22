@@ -1,7 +1,17 @@
 #!/bin/bash
+
+escape() {
+    output=$1
+    output=$(sed 's:/:\\/:g'<<<"$output")
+    output=$(sed 's:":\\":g'<<<"$output")
+    echo $output
+}
+
 kernel_version=$(uname -r)
 cpu=$(cat /proc/cpuinfo | grep "model name" | awk -F': ' '{print $2}')
+cpu=$(escape "$cpu")
 network_status=$(cat /tmp/netstat)
+network_status=$(escape "$network_status")
 
 if [ ! -f /tmp/persistent ]; then
     persistent_mode="ramdisk mode"

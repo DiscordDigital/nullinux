@@ -72,20 +72,26 @@ if [[ $method == "disabled" ]]; then
 fi
 
 if [[ $interface == "auto" ]]; then
-    # Fallback
-    interface=eth0
-    for net in /sys/class/net/eth*; do
-        enable_interface $(basename $net)
-        link=$(cat "$net/carrier")
-        if [ "$link" -eq "1" ]; then
-            interface=$(basename $net)
-            break
-        fi
-        disable_interface $(basename $net)
-    done
+    if [ -d /sys/class/net/eth* ]; then
+        for net in /sys/class/net/eth*; do
+            enable_interface $(basename $net)
+            link=$(cat "$net/carrier")
+            if [ "$link" -eq "1" ]; then
+                interface=$(basename $net)
+                break
+            fi
+            disable_interface $(basename $net)
+        done
+    fi
 fi
 
 if [[ $method == "dhcpv4" ]]; then
+    if [[ $interface == "auto" ]]; then
+        echo "Can't use method dhcpv4 without interface." > /dev/stderr
+        echo "offline" > /tmp/netstat
+        exit 1
+    fi
+
     # init interfaces
     initialize_interfaces $interface dhcpv4
     if [ $? -ne 0 ]; then
@@ -132,7 +138,7 @@ if [[ $method == "dhcpv4" ]]; then
             echo nameserver $dns2 >> /etc/resolv.conf
         fi
 
-        echo "$address\/$cidr" > /tmp/netstat
+        echo "$address/$cidr" > /tmp/netstat
         exit 0
     fi
 fi
@@ -161,6 +167,6 @@ if [[ $method == "static" ]]; then
        echo nameserver $v4dns2 >> /etc/resolv.conf
     fi
 
-    echo "$v4address\/$v4cidr" > /tmp/netstat
+    echo "$v4address/$v4cidr" > /tmp/netstat
     exit 0
 fi
