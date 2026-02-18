@@ -23,6 +23,8 @@ install_qemu() {
     return $?
 }
 
+args="$@"
+
 # Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -59,17 +61,10 @@ TOOLSDIR=$(realpath "$MAIN/tools")
 declare -a tools=( "dependencies" "getlinux" "mkrootfs" "compiletools" "filegrab" "copymodules" "getkbd" "timezone" "createinitcpio" "grubiso" "qemutest" )
 
 for tool in "${tools[@]}"; do
-    if [[ "$tool" == "qemutest" ]] && [[ -v quiet ]]; then
-        continue
-    fi
 
     echo "Running $tool.sh"
-    if [[ "$tool" == "dependencies" ]] && [[ -v skip_qemu ]]; then
-        "$TOOLSDIR/$tool.sh" skip_qemu
-    else
-        "$TOOLSDIR/$tool.sh"
-    fi
-    
+    "$TOOLSDIR/$tool.sh" $args
+
     if [ "$?" -eq "1" ]; then
         echo "Tool exited with 1, aborting."
         exit 1

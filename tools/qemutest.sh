@@ -5,7 +5,17 @@ ROOTFS=$(realpath "$TOOLSDIR/../rootfs")
 TEMPDIR=$(realpath "$TOOLSDIR/../temp")
 MAIN=$(realpath "$TOOLSDIR/../")
 
-if [ "$1" == "quiet" ]; then
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -q|--quiet)
+            quiet=1
+            ;;
+    esac
+    shift
+done
+
+if [[ -v quiet ]]; then
     echo "Skipping qemu test.."
     exit 0
 fi
