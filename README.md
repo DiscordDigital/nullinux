@@ -27,7 +27,7 @@ This utility is meant for administrators, to perform tasks, possibly related to 
 Nul Linux also provides some tools, which the next section will be about.
 
 # Building with Docker
-Originally Nul Linux was created to be built from WSL, however it is also possible to build a `nullinux.iso` using Docker:\
+Originally Nul Linux was created to be built from WSL, however it is also possible to build a `nullinux.iso` using Docker:
 1. Clone the repository: `git clone https://github.com/DiscordDigital/nullinux`
 2. Change directory: `cd nullinux`
 3. Build image: `sudo docker build . -t nullinux-builder:latest`
@@ -214,5 +214,6 @@ In case you want to just build the ISO and move it to your user profile folder, 
 Due to the fact that this only contains partial binaries of packages, I want to clarify to *not* distribute ISOs.
 
 This project will never distribute an ISO file, build it yourself, it's easy.
+
 
 
