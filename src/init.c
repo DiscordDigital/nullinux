@@ -67,16 +67,16 @@ void mount_fs(const char *source, const char *target, const char *type) {
 }
 
 /* ----------------------------------------------------------------------
- *  main - set up a minimal chroot‑like environment and drop into a bash
+ *  main - set up a minimal chroot-like environment and drop into a bash
  * ---------------------------------------------------------------------- */
 int main(int argc, char *argv[])
 {
-    // Mount the essential pseudo‑filesystems that a normal Linux userspace expects to find.
+    // Mount the essential pseudo-filesystems that a normal Linux userspace expects to find.
     mount_fs("devtmpfs", "/dev", "devtmpfs");
     mount_fs("proc", "/proc", "proc");
     mount_fs("sysfs", "/sys", "sysfs");
 
-    /* Create the standard file‑descriptor symlinks that many programs use.
+    /* Create the standard file-descriptor symlinks that many programs use.
      * The leading "(void)! ..." silences the compiler warning about the
      * return value while still executing the call. */
     (void)!symlink("/proc/self/fd", "/dev/fd");         // generic FD directory
@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
     (void)!symlink("/proc/self/fd/1", "/dev/stdout");   // stdout
     (void)!symlink("/proc/self/fd/2", "/dev/stderr");   // stderr
 
-    // Set up a pseudo‑terminal master directory - required for ssh sessions.
+    // Set up a pseudo-terminal master directory - required for ssh sessions.
     mkdir("/dev/pts", 0755);                            // create mount point
     mount_fs("devpts", "/dev/pts", "devpts");           // mount devpts
 
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
     (void)run("/opt/init.0/boot.sh");
 
     /* Main loop - keep respawning a bash after it exits.
-     * This mimics an init‑style process that stays alive forever. */
+     * This mimics an init-style process that stays alive forever. */
     while (1) {
         pid_t pid = fork();                           // create child
         if (pid == 0) {                               // child process

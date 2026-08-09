@@ -7,7 +7,7 @@
  *      progname --reboot    -> sync files, try to clean up /root,
  *                              then issue a kernel reboot.
  *      progname --shutdown  -> sync files, try to clean up /root,
- *                              then power‑off the machine.
+ *                              then power-off the machine.
  *
  *  It attempts to kill all remaining 'bash' processes (and any other
  *  processes that share the same executable name) before unmounting
@@ -46,7 +46,7 @@
  *  Returns
  *      Dynamically allocated array of C strings (char **).  The caller
  *      must free each string (using free()) and then free the array
- *      itself.  Returns NULL on allocation or directory‑open error.
+ *      itself.  Returns NULL on allocation or directory-open error.
  *=====================================================================*/
 char **get_comms(int *out_count) {
     DIR *dir;                                           // directory stream for /proc
@@ -70,13 +70,13 @@ char **get_comms(int *out_count) {
      *  Walk through every entry in /proc
      *----------------------------------------------------------------*/
     while ((entry = readdir(dir)) != NULL) {
-        // Skip non‑numeric entries - they are not PIDs
+        // Skip non-numeric entries - they are not PIDs
         if (!isdigit(entry->d_name[0]))
             continue;
 
         // Build the path to the comm file for this PID
         snprintf(path, sizeof(path) - 1, "/proc/%s/comm", entry->d_name);
-        path[sizeof(path) - 1] = '\0'; // safety null‑termination
+        path[sizeof(path) - 1] = '\0'; // safety null-termination
 
         FILE *f = fopen(path, "r");
         if (!f)                        // process may have vanished; ignore it
@@ -118,7 +118,7 @@ char **get_comms(int *out_count) {
  *
  *  1. Verify that /root is currently a mounted filesystem.
  *  2. If it is, create a temporary marker file (/tmp/poweroff) - this
- *     is used by init to detect that a power‑off sequence is in progress.
+ *     is used by init to detect that a power-off sequence is in progress.
  *  3. Fork a child that:
  *        a) Retrieves the list of unique process names via get_comms().
  *        b) For each process, run `killall -9 <name>`
@@ -157,7 +157,7 @@ int deinit(const char *paction) {
     
     /*------------------------------------------------------------
      *  Create a marker file so that the init program can
-     *  detect that a power‑off is underway.
+     *  detect that a power-off is underway.
      *------------------------------------------------------------*/
     int fd = open("/tmp/poweroff", O_WRONLY | O_CREAT, 0644);
     if (fd == -1) {
@@ -213,7 +213,7 @@ int deinit(const char *paction) {
     }
 
     /*------------------------------------------------------------
-     *  Finally, force‑unmount /root.  MNT_FORCE allows us to detach
+     *  Finally, force-unmount /root.  MNT_FORCE allows us to detach
      *  even if the filesystem is busy.
      *------------------------------------------------------------*/
     if (is_mounted) {
@@ -229,7 +229,7 @@ int deinit(const char *paction) {
 /*=====================================================================
  *  main()
  *
- *  Very small command‑line driver:
+ *  Very small command-line driver:
  *      - Verify exactly one argument is supplied.
  *      - Call sync() to flush buffered data to disk.
  *      - Run deinit() to clean up /root and cause init to reboot or shutdown.

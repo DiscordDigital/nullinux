@@ -24,7 +24,7 @@ void reap_children(int sig) {
 }
 
 /* --------------------------------------------------------------
- * Helper: send a minimal 404 Not‑Found response.
+ * Helper: send a minimal 404 Not-Found response.
  * -------------------------------------------------------------- */
 void send_404(int client_fd) {
     const char *msg = "HTTP/1.1 404 Not Found\r\nContent-Length: 13\r\n\r\n404 Not Found";
@@ -77,7 +77,7 @@ void send_dir(int client_fd, const char *path, const char *url_path) {
 
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        if (strcmp(entry->d_name, ".") == 0) continue; // skip the current‑dir entry
+        if (strcmp(entry->d_name, ".") == 0) continue; // skip the current-dir entry
 
         // Construct a relative URL for each entry
         char link[512];
@@ -104,7 +104,7 @@ void send_dir(int client_fd, const char *path, const char *url_path) {
 }
 
 /* --------------------------------------------------------------
- * OpenSSL helper: build a Base64‑encoded "user:pass" string for
+ * OpenSSL helper: build a Base64-encoded "user:pass" string for
  * HTTP Basic authentication.
  * -------------------------------------------------------------- */
 char *basic_auth_string(const char *user, const char *pass) {
@@ -123,7 +123,7 @@ char *basic_auth_string(const char *user, const char *pass) {
  * Verify the Authorization header against the expected Base64
  * credential string.
  *   header    - raw HTTP request buffer (contains headers)
- *   expected  - Base64‑encoded "user:pass" string generated above
+ *   expected  - Base64-encoded "user:pass" string generated above
  * -------------------------------------------------------------- */
 int check_auth(const char *header, const char *expected) {
     if (!header) return 0;
@@ -146,7 +146,7 @@ int check_auth(const char *header, const char *expected) {
 }
 
 /* --------------------------------------------------------------
- * Decode a percent‑encoded URL component into plain text.
+ * Decode a percent-encoded URL component into plain text.
  *   dst  - destination buffer
  *   src  - source (encoded) string
  * -------------------------------------------------------------- */
@@ -171,7 +171,7 @@ void url_decode(char *dst, const char *src) {
 }
 
 /* --------------------------------------------------------------
- * Per‑client request handler. Runs in a forked child process.
+ * Per-client request handler. Runs in a forked child process.
  *   client_fd   - socket descriptor for the connected client
  *   client_addr - sockaddr_in structure describing the peer
  *   auth_b64    - optional Base64 credential string (NULL if auth disabled)
@@ -180,7 +180,7 @@ void handle_client(int client_fd, struct sockaddr_in *client_addr, const char *a
     char buffer[BUFFER];
     ssize_t r = read(client_fd, buffer, BUFFER - 1);
     if (r <= 0) { close(client_fd); exit(0); }
-    buffer[r] = 0; // NUL‑terminate the request
+    buffer[r] = 0; // NUL-terminate the request
 
     // Parse the request line (method and URL)
     char method[8], url[256];
@@ -209,7 +209,7 @@ void handle_client(int client_fd, struct sockaddr_in *client_addr, const char *a
         
         size_t max_len = sizeof(path) - 2; // leave room for leading '.' and NUL
         
-        // Decode any percent‑escapes in the URL
+        // Decode any percent-escapes in the URL
         url_decode(decoded_url, url);
         if (strlen(decoded_url) > max_len) {
             decoded_url[max_len] = '\0';  // truncate if overly long
@@ -243,18 +243,18 @@ void handle_client(int client_fd, struct sockaddr_in *client_addr, const char *a
 }
 
 /* --------------------------------------------------------------
- * Program entry point - parses command‑line options, sets up the
+ * Program entry point - parses command-line options, sets up the
  * listening socket, and forks a new process for each incoming
  * connection.
  * -------------------------------------------------------------- */
 int main(int argc, char *argv[]) {
     int port = 80; // default HTTP port
-    char *username = NULL, *password = NULL; // command‑line credentials (if any)
+    char *username = NULL, *password = NULL; // command-line credentials (if any)
 
     // Ignore SIGPIPE so that write() errors on closed sockets don't kill the server
     signal(SIGPIPE, SIG_IGN);
 
-    // Process command‑line flags: -p <port> -u <user> -P <pass>
+    // Process command-line flags: -p <port> -u <user> -P <pass>
     int opt;
     while ((opt = getopt(argc, argv, "p:u:P:")) != -1) {
         switch (opt) {
@@ -323,7 +323,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // Clean‑up (unreachable in current design, but kept for completeness)
+    // Clean-up (unreachable in current design, but kept for completeness)
     free(auth_b64);
     close(server_fd);
     return 0;

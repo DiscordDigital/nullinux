@@ -2,14 +2,14 @@
  * Minimal DHCP client
  *
  * What it does:
- *   1. Open a UDP socket on the client‑side DHCP port (68).
+ *   1. Open a UDP socket on the client-side DHCP port (68).
  *   2. Build a DHCPDISCOVER packet and broadcast it on the local
  *      network.
  *   3. Use mac address of interface passed as argument.
- *   4. Wait (with a 5‑second timeout) for a DHCPOFFER reply.
+ *   4. Wait (with a 5-second timeout) for a DHCPOFFER reply.
  *   5. When a reply arrives, extract the offered IP address, subnet
  *      mask, default gateway and DNS servers and print them in a
- *      format that can be `eval`‑ed by a shell script.
+ *      format that can be `eval`-ed by a shell script.
  *
  * The code is deliberately tiny - it only implements the parts of
  * DHCP that are needed to obtain a lease.
@@ -63,7 +63,7 @@ struct dhcp_msg {
     uint8_t sname[64];    /* Optional server host name (not used) */
     uint8_t file[128];    /* Boot file name (not used) */
     uint32_t magic;       /* DHCP magic cookie - must be 0x63825363 */
-    uint8_t options[312]; /* Variable‑length options field (max 312 bytes) */
+    uint8_t options[312]; /* Variable-length options field (max 312 bytes) */
 };
 
 /* -----------------------------------------------------------------
@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
      *    (xid) is generated from the current time - this is not
      *    cryptographically strong but is OK for this purpose.
      * ------------------------------------------------------------- */
-    memset(&msg, 0, sizeof(msg));    // Zero‑fill the whole structure
+    memset(&msg, 0, sizeof(msg));    // Zero-fill the whole structure
 
     msg.op = 1;                      // BOOTREQUEST
     msg.htype = 1;                   // Ethernet
@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {
     *opt++ = OPTION_END;          // 255
 
     /* -------------------------------------------------------------
-     * 6) Broadcast the DISCOVER packet to the well‑known DHCP server
+     * 6) Broadcast the DISCOVER packet to the well-known DHCP server
      *    port (67) on the broadcast address (255.255.255.255).
      * ------------------------------------------------------------- */
     memset(&addr, 0, sizeof(addr));
@@ -244,7 +244,7 @@ int main(int argc, char *argv[]) {
 
         /* ---------------------------------------------------------
          * 9) Parse the options field looking for the data we care
-         *    about.  The DHCP options are TLV‑encoded:
+         *    about.  The DHCP options are TLV-encoded:
          *
          *        Type  Length  Value...
          *

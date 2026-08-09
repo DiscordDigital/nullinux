@@ -32,7 +32,7 @@ Originally Nul Linux was created to be built from WSL, however it is also possib
 2. Change directory: `cd nullinux`
 3. Build image: `sudo docker build . -t nullinux-builder:latest`
 4. Build Nul Linux: `sudo docker run --rm -it -v $(pwd)/:/export nullinux-builder:latest`
-5. (optional) Remove nullinux-builder-image: `docker image rm nullinux-builder:latest`
+5. (optional) Remove nullinux-builder-image: `sudo docker image rm nullinux-builder:latest`
 
 # Tools
 
